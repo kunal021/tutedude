@@ -36,11 +36,6 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    providerId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
     age: {
       type: Number,
       min: 0,
