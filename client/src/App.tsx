@@ -1,35 +1,112 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import AppProviders from "./context/AppProviders";
+import PublicRoute from "./routes/PublicRoute";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import Layout from "./layout/Layout";
+import UnauthorizedPage from "./components/extra/Unauthorized";
+import NotFoundPage from "./components/extra/NotFoundPage";
+import Auth from "./layout/Auth";
+import ConnectionsPage from "./pages/ConnectionsPage";
+import HomePage from "./pages/HomePage";
+import GetUserProfile from "./components/user/GetUserProfile";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfile from "./components/profile/EditProfile";
+import Home from "./components/home/Home";
+import RecommendationPage from "./pages/RecommendationPage";
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const router = createBrowserRouter([
+    {
+      element: <Layout />,
+      children: [
+        {
+          path: "/auth/login",
+          element: (
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/auth/signup",
+          element: (
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/",
+          element: (
+            <PublicRoute>
+              <Home />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/home",
+          element: (
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/home/:userId",
+          element: (
+            <ProtectedRoute>
+              <GetUserProfile />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/connections",
+          element: (
+            <ProtectedRoute>
+              <ConnectionsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/recommendations",
+          element: (
+            <ProtectedRoute>
+              <RecommendationPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/profile",
+          element: (
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/profile/edit",
+          element: (
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/unauthorized",
+          element: <UnauthorizedPage />,
+        },
+        {
+          path: "*",
+          element: <NotFoundPage />,
+        },
+      ],
+    },
+  ]);
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
+  );
 }
 
-export default App
+export default App;

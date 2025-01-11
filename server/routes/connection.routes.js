@@ -1,6 +1,7 @@
 import express from "express";
 import authValidation from "../middlewares/authValidation.middleware.js";
 import {
+  getFriendRecommendations,
   reviewConnectionRequest,
   sendConnectionRequest,
 } from "../controllers/connection.controller.js";
@@ -13,5 +14,6 @@ router.post(
   authValidation,
   reviewConnectionRequest
 );
+router.get("/recommendations", authValidation, getFriendRecommendations);
 
 export default router;

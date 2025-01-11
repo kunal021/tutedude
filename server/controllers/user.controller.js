@@ -307,6 +307,7 @@ export const getAllConnections = async (req, res, next) => {
 
 export const getFeed = async (req, res, next) => {
   try {
+    const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -328,12 +329,21 @@ export const getFeed = async (req, res, next) => {
       hideUsersFromFeed.add(connection.receiver._id.toString());
     });
 
-    const feed = await User.find({
+    const queryConditions = {
       $and: [
         { _id: { $nin: [...hideUsersFromFeed] } },
         { _id: { $ne: loggedInUser._id } },
       ],
-    })
+      $or: [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { userName: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    const totalCount = await User.countDocuments(queryConditions);
+
+    const feed = await User.find(queryConditions)
       .select("-password -refreshToken -__v")
       .skip(skip)
       .limit(maxLimit);
@@ -342,7 +352,11 @@ export const getFeed = async (req, res, next) => {
       throw { status: 404, message: "No feed found" };
     }
 
-    return res.status(200).json({ success: true, data: feed });
+    return res.status(200).json({
+      success: true,
+      data: feed,
+      pagination: { page, limit, total: totalCount },
+    });
   } catch (error) {
     next(error);
   }

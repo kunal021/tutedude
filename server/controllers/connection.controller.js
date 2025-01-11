@@ -98,3 +98,83 @@ export const reviewConnectionRequest = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getFriendRecommendations = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user;
+
+    if (!loggedInUser) {
+      throw { status: 401, message: "Unauthorized" };
+    }
+
+    const getUserConnections = await Connection.find({
+      $or: [
+        { sender: loggedInUser._id, status: "accepted" },
+        { receiver: loggedInUser._id, status: "accepted" },
+      ],
+    });
+
+    const userFriends = getUserConnections.map((connection) => {
+      if (connection.sender._id.toString() === loggedInUser._id.toString()) {
+        return connection.receiver;
+      } else {
+        return connection.sender;
+      }
+    });
+
+    const mutualFriends = await Connection.aggregate([
+      {
+        $match: {
+          status: "accepted",
+          $or: [{ sender: loggedInUser._id }, { receiver: loggedInUser._id }],
+        },
+      },
+      {
+        $group: {
+          _id: {
+            user: {
+              $cond: [
+                { $eq: ["$sender", loggedInUser._id] },
+                "$receiver",
+                "$sender",
+              ],
+            },
+          },
+          mutualCount: { $sum: 1 },
+        },
+      },
+      { $sort: { mutualCount: -1 } },
+    ]);
+
+    let recommendations = await User.find({
+      _id: {
+        $in: mutualFriends.map((friend) => friend._id),
+      },
+      _id: {
+        $ne: loggedInUser._id,
+      },
+    }).select("-password -refreshToken -__v");
+
+    if (req.query.includeInterests === "true") {
+      const currentUser = await User.findById(loggedInUser._id);
+      if (currentUser.intrests) {
+        recommendations = recommendations.sort((a, b) => {
+          const aCommonInterests = a.intrests.filter((interest) =>
+            currentUser.intrests.includes(interest)
+          ).length;
+          const bCommonInterests = b.intrests.filter((interest) =>
+            currentUser.intrests.includes(interest)
+          ).length;
+          return bCommonInterests - aCommonInterests;
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      recommendations: recommendations,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
