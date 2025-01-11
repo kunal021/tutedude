@@ -107,8 +107,7 @@ const Home = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-2lg md:text-4xl text-center font-bold mb-8 text-lime-500"
           >
-            Find new peoples, make new friends, and build a strong developer
-            community.
+            Find new peoples, make new friends, and build a strong community.
           </motion.p>
           <motion.button
             onClick={() => navigate("/auth/signup")}
